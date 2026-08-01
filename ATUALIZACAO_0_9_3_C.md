@@ -1,0 +1,1 @@
+# Atualização 0.9.3-C\n\nExtraia sobre `C:\SGM\Projeto\sgm_mvp_0_1_0` e execute `py -m pytest -v`. Na instalação completa, o resultado esperado é `830 passed`.

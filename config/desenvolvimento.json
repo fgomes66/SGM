@@ -1,0 +1,6 @@
+{
+  "ambiente": "DESENVOLVIMENTO",
+  "estacao": "ET-MG-01",
+  "versao_sistema": "0.1.0",
+  "caminho_banco": "dados/sgm_desenvolvimento.db"
+}

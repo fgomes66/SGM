@@ -1,0 +1,16 @@
+README.md
+pyproject.toml
+src/sgm/__init__.py
+src/sgm/auditoria/__init__.py
+src/sgm/auditoria/servico.py
+src/sgm/infraestrutura/__init__.py
+src/sgm/infraestrutura/banco/__init__.py
+src/sgm/infraestrutura/banco/conexao.py
+src/sgm/infraestrutura/banco/migracoes.py
+src/sgm/infraestrutura/seguranca/__init__.py
+src/sgm/infraestrutura/seguranca/senhas.py
+src/sgm_mvp.egg-info/PKG-INFO
+src/sgm_mvp.egg-info/SOURCES.txt
+src/sgm_mvp.egg-info/dependency_links.txt
+src/sgm_mvp.egg-info/requires.txt
+src/sgm_mvp.egg-info/top_level.txt

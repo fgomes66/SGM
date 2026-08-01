@@ -1,0 +1,10 @@
+from enum import StrEnum
+
+
+class NaturezaFinanceira(StrEnum):
+    REMUNERATORIA = "REMUNERATORIA"
+    REFLEXA = "REFLEXA"
+    FUNDIARIA = "FUNDIARIA"
+    INDENIZATORIA = "INDENIZATORIA"
+    ATUALIZACAO = "ATUALIZACAO"
+    OUTRA = "OUTRA"
