@@ -14,6 +14,7 @@ from sgm.desktop import (
 def test_01_secoes_estaveis():
     assert SecaoDesktop.INICIO.value == "INICIO"
     assert SecaoDesktop.EXPORTACAO.value == "EXPORTACAO"
+    assert SecaoDesktop.IA.value == "IA"
 
 
 def test_02_titulos_das_secoes():
@@ -86,14 +87,14 @@ def test_11_item_rejeita_rotulo_vazio():
         )
 
 
-def test_12_catalogo_possui_oito_itens():
-    assert len(criar_catalogo_navegacao()) == 8
+def test_12_catalogo_possui_nove_itens():
+    assert len(criar_catalogo_navegacao()) == 9
 
 
 def test_13_catalogo_preserva_ordem():
     catalogo = criar_catalogo_navegacao()
     assert catalogo[0].secao == SecaoDesktop.INICIO
-    assert catalogo[-1].secao == SecaoDesktop.EXPORTACAO
+    assert catalogo[-1].secao == SecaoDesktop.IA
 
 
 def test_14_catalogo_nao_repete_secoes():

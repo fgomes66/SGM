@@ -10,6 +10,7 @@ class SecaoDesktop(StrEnum):
     MEMORIA = "MEMORIA"
     RELATORIO = "RELATORIO"
     EXPORTACAO = "EXPORTACAO"
+    IA = "IA"
 
     @property
     def titulo(self) -> str:
@@ -22,4 +23,5 @@ class SecaoDesktop(StrEnum):
             SecaoDesktop.MEMORIA: "Memória de Cálculo",
             SecaoDesktop.RELATORIO: "Relatório Técnico",
             SecaoDesktop.EXPORTACAO: "Exportação",
+            SecaoDesktop.IA: "Inteligência Artificial",
         }[self]

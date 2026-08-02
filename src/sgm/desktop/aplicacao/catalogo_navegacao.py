@@ -16,6 +16,9 @@ def criar_catalogo_navegacao() -> tuple[ItemNavegacao, ...]:
         SecaoDesktop.MEMORIA: "Memória detalhada e auditável.",
         SecaoDesktop.RELATORIO: "Relatório técnico final.",
         SecaoDesktop.EXPORTACAO: "Arquivos TXT, MD, HTML, PDF e DOCX.",
+        SecaoDesktop.IA: (
+            "Importação inteligente de processos e apoio por IA."
+        ),
     }
     return tuple(
         ItemNavegacao(
