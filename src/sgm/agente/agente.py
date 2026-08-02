@@ -1,5 +1,7 @@
+from .contexto import ContextoTrabalhista
 from .executor import Executor
-from .interpretador import Assunto, Intencao, Interpretacao, Interpretador
+from .extrator import Extrator
+from .interpretador import Assunto, Intencao, Interpretador
 from .memoria import Memoria
 
 
@@ -14,12 +16,20 @@ class Agente:
 
     def __init__(self):
         self.interpretador = Interpretador()
+        self.extrator = Extrator()
         self.executor = Executor()
         self.memoria = Memoria()
 
     def executar(self, texto: str):
         interpretacao = self.interpretador.interpretar(texto)
-        nome_ferramenta = self._selecionar_ferramenta(interpretacao)
+        entidades = self.extrator.extrair(texto)
+
+        contexto = ContextoTrabalhista(
+            interpretacao=interpretacao,
+            entidades=entidades,
+        )
+
+        nome_ferramenta = self._selecionar_ferramenta(contexto)
 
         resultado = self.executor.executar(
             nome_ferramenta,
@@ -35,15 +45,15 @@ class Agente:
 
     def _selecionar_ferramenta(
         self,
-        interpretacao: Interpretacao,
+        contexto: ContextoTrabalhista,
     ) -> str:
-        if interpretacao.intencao is Intencao.PESQUISA_LEGISLACAO:
+        if contexto.intencao is Intencao.PESQUISA_LEGISLACAO:
             return "pesquisa_legislacao"
 
-        if interpretacao.intencao is Intencao.CALCULADORA:
+        if contexto.intencao is Intencao.CALCULADORA:
             return "calculadora"
 
         return self._FERRAMENTAS_POR_ASSUNTO.get(
-            interpretacao.assunto,
+            contexto.assunto,
             "calculo_trabalhista",
         )
