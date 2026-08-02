@@ -11,6 +11,7 @@ from sgm.desktop.aplicacao import (
 from sgm.desktop.apresentacao.telas.tela_calculo import TelaCalculo
 from sgm.desktop.apresentacao.telas.tela_contrato import TelaContrato
 from sgm.desktop.apresentacao.telas.tela_eventos import TelaEventos
+from sgm.desktop.apresentacao.telas.tela_ia import TelaIA
 from sgm.desktop.apresentacao.telas.tela_memoria import TelaMemoria
 from sgm.desktop.apresentacao.telas.tela_relatorio import TelaRelatorio
 from sgm.desktop.apresentacao.telas.tela_processo import (
@@ -38,6 +39,7 @@ class TelaConteudo(ttk.Frame):
         self._eventos = TelaEventos(self, controlador)
         self._memoria = TelaMemoria(self, controlador)
         self._relatorio = TelaRelatorio(self, controlador)
+        self._ia = TelaIA(self)
         self._placeholder = self._criar_placeholder()
 
         self._quadros[SecaoDesktop.INICIO] = self._inicio
@@ -47,6 +49,7 @@ class TelaConteudo(ttk.Frame):
         self._quadros[SecaoDesktop.CALCULO] = self._calculo
         self._quadros[SecaoDesktop.MEMORIA] = self._memoria
         self._quadros[SecaoDesktop.RELATORIO] = self._relatorio
+        self._quadros[SecaoDesktop.IA] = self._ia
 
     def _criar_inicio(self) -> ttk.Frame:
         quadro = ttk.Frame(self, padding=18)
@@ -104,6 +107,7 @@ class TelaConteudo(ttk.Frame):
         self._calculo.grid_forget()
         self._memoria.grid_forget()
         self._relatorio.grid_forget()
+        self._ia.grid_forget()
         self._placeholder.grid_forget()
 
     def mostrar_secao(
@@ -162,6 +166,15 @@ class TelaConteudo(ttk.Frame):
         if secao == SecaoDesktop.RELATORIO:
             self._relatorio.carregar_estado(estado)
             self._relatorio.grid(
+                row=0,
+                column=0,
+                sticky="nsew",
+            )
+            return
+
+        if secao == SecaoDesktop.IA:
+            self._ia.carregar_estado(estado)
+            self._ia.grid(
                 row=0,
                 column=0,
                 sticky="nsew",
