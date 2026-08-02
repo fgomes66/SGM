@@ -1,30 +1,27 @@
 from .executor import Executor
+from .interpretador import Interpretador
 from .memoria import Memoria
-from .planejador import Planejador
 
 
 class Agente:
 
     def __init__(self):
-        self.planejador = Planejador()
+        self.interpretador = Interpretador()
         self.executor = Executor()
         self.memoria = Memoria()
 
-    def executar(self, objetivo: str):
+    def executar(self, texto: str):
 
-        plano = self.planejador.criar_plano(objetivo)
+        interpretacao = self.interpretador.interpretar(texto)
 
-        ultimo = None
-
-        for passo in plano.passos:
-            ultimo = self.executor.executar(
-                passo.ferramenta,
-                passo.objetivo,
-            )
-
-        self.memoria.adicionar(
-            objetivo,
-            ultimo.mensagem if ultimo else "",
+        resultado = self.executor.executar(
+            interpretacao.intencao.value,
+            texto,
         )
 
-        return ultimo
+        self.memoria.adicionar(
+            texto,
+            resultado.mensagem,
+        )
+
+        return resultado
