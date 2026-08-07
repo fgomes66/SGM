@@ -2,6 +2,7 @@ from enum import StrEnum
 
 
 class CodigoVerba(StrEnum):
+    SALARIO = "SALARIO"
     HORA_EXTRA = "HORA_EXTRA"
     DSR = "DSR"
     FGTS = "FGTS"

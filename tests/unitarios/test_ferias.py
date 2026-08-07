@@ -334,3 +334,24 @@ def test_30_resultado_e_imutavel():
     )
     with pytest.raises(FrozenInstanceError):
         resultado.valor_total = valor("0")
+
+def test_31_salario_compoe_base_ferias():
+    base = ServicoComposicaoBase.compor(
+        TipoBaseIncidencia.FERIAS,
+        (
+            parcela(
+                verba=CodigoVerba.SALARIO,
+                texto="2500.00",
+            ),
+        ),
+    )
+
+    resultado = ServicoFerias.calcular(
+        base,
+        parametros(),
+    )
+
+    assert resultado.base.total.valor == Decimal("2500.00")
+    assert resultado.valor_ferias.valor == Decimal("2500.00")
+    assert resultado.valor_terco.valor == Decimal("833.33")
+    assert resultado.valor_total.valor == Decimal("3333.33")
