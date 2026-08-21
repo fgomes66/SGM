@@ -3,7 +3,7 @@ from .catalogo import FERRAMENTAS
 from .contexto import ContextoTrabalhista
 from .modelos import ResultadoFerramenta
 
-from sgm.dominio.trabalhista import ServicoFerias
+from sgm.dominio.trabalhista import ServicoDecimoTerceiro, ServicoFerias
 
 
 class Executor:
@@ -54,16 +54,42 @@ class Executor:
                         },
                     )
 
-                dados = self._preparar_dados(
+                if (
+                    nome_ferramenta == "calculadora_decimo_terceiro"
+                    and isinstance(contexto, ContextoTrabalhista)
+                ):
+                    base, parametros = (
+                        AdaptadorPlanoTrabalhista.preparar_decimo_terceiro(
+                            contexto
+                        )
+                    )
+
+                    decimo = ServicoDecimoTerceiro.calcular(
+                        base,
+                        parametros,
+                    )
+
+                    return ResultadoFerramenta(
+                        sucesso=True,
+                        mensagem="Cálculo de 13º salário executado.",
+                        dados={
+                            "valor_decimo_terceiro": str(decimo.valor.valor),
+                            "moeda": decimo.valor.moeda,
+                            "avos": decimo.parametros.avos,
+                            "memoria": list(decimo.memoria_resumida()),
+                        },
+                    )
+
+            dados = self._preparar_dados(
                     contexto=contexto,
                     categoria=ferramenta.categoria,
                 )
 
-                return ResultadoFerramenta(
-                    sucesso=True,
-                    mensagem=f"Ferramenta '{nome_ferramenta}' executada.",
-                    dados=dados,
-                )
+            return ResultadoFerramenta(
+                sucesso=True,
+                mensagem=f"Ferramenta '{nome_ferramenta}' executada.",
+                dados=dados,
+            )
 
         return ResultadoFerramenta(
             sucesso=False,
@@ -97,3 +123,4 @@ class Executor:
             "assunto": contexto.assunto.value,
             "entidades": entidades,
         }
+

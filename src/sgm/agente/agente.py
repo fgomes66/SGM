@@ -1,4 +1,4 @@
-from .contexto import ContextoTrabalhista
+﻿from .contexto import ContextoTrabalhista
 from .executor import Executor
 from .extrator import Extrator
 from .interpretador import Assunto, Intencao, Interpretador
@@ -30,6 +30,13 @@ class Agente:
         )
 
         nome_ferramenta = self._selecionar_ferramenta(contexto)
+
+        # 13º salário: presença de avos diferencia do salário comum
+        if (
+            contexto.interpretacao.assunto is Assunto.SALARIO
+            and contexto.buscar("avos") is not None
+        ):
+            nome_ferramenta = "calculadora_decimo_terceiro"
 
         resultado = self.executor.executar(
             nome_ferramenta,

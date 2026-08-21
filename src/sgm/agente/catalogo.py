@@ -1,45 +1,50 @@
-from .modelos import Ferramenta
+﻿from .modelos import Ferramenta
 
 
 FERRAMENTAS = [
     Ferramenta(
         nome="calculo_trabalhista",
-        descricao="Executa cálculos trabalhistas genéricos.",
+        descricao="Executa cÃ¡lculos trabalhistas genÃ©ricos.",
         categoria="trabalhista",
     ),
     Ferramenta(
         nome="calculadora_ferias",
-        descricao="Executa cálculos relacionados a férias.",
+        descricao="Executa cÃ¡lculos relacionados a fÃ©rias.",
+        categoria="trabalhista",
+    ),
+    Ferramenta(
+        nome="calculadora_decimo_terceiro",
+        descricao="Executa cálculos relacionados ao 13º salário.",
         categoria="trabalhista",
     ),
     Ferramenta(
         nome="calculadora_rescisao",
-        descricao="Executa cálculos relacionados à rescisão contratual.",
+        descricao="Executa cÃ¡lculos relacionados Ã  rescisÃ£o contratual.",
         categoria="trabalhista",
     ),
     Ferramenta(
         nome="calculadora_fgts",
-        descricao="Executa cálculos relacionados ao FGTS.",
+        descricao="Executa cÃ¡lculos relacionados ao FGTS.",
         categoria="trabalhista",
     ),
     Ferramenta(
         nome="calculadora_horas_extras",
-        descricao="Executa cálculos relacionados a horas extras.",
+        descricao="Executa cÃ¡lculos relacionados a horas extras.",
         categoria="trabalhista",
     ),
     Ferramenta(
         nome="calculadora_salario",
-        descricao="Executa cálculos relacionados a salário e remuneração.",
+        descricao="Executa cÃ¡lculos relacionados a salÃ¡rio e remuneraÃ§Ã£o.",
         categoria="trabalhista",
     ),
     Ferramenta(
         nome="pesquisa_legislacao",
-        descricao="Pesquisa legislação aplicável.",
+        descricao="Pesquisa legislaÃ§Ã£o aplicÃ¡vel.",
         categoria="juridico",
     ),
     Ferramenta(
         nome="calculadora",
-        descricao="Executa operações matemáticas gerais.",
+        descricao="Executa operaÃ§Ãµes matemÃ¡ticas gerais.",
         categoria="utilitario",
     ),
 ]
