@@ -33,7 +33,7 @@ class Agente:
 
         resultado = self.executor.executar(
             nome_ferramenta,
-            texto,
+            contexto,
         )
 
         self.memoria.adicionar(
