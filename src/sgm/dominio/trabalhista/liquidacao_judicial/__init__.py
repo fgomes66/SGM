@@ -66,3 +66,7 @@ from .parametros_atualizacao_judicial import (
 from .resultado_atualizado_judicial import (
     ResultadoAtualizadoJudicial,
 )
+
+from .gerador_memoria_liquidacao_judicial import (
+    GeradorMemoriaLiquidacaoJudicial,
+)
