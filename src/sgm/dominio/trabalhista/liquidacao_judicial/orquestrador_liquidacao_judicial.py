@@ -14,6 +14,7 @@ from sgm.dominio.trabalhista import (
     DivisorJornada,
     ParametrosDecimoTerceiro,
     ParametrosDSR,
+    ParametrosAvisoPrevio,
     ParametrosFerias,
     ParcelaIncidencia,
     RegraIncidencia,
@@ -24,7 +25,9 @@ from sgm.dominio.trabalhista import (
     ServicoHoraExtra,
     ServicoReflexoDSR,
     ServicoValorHora,
+    ServicoAvisoPrevio,
     TipoAdicionalHoraExtra,
+    TipoAvisoPrevio,
     TipoBaseCalculo,
     TipoBaseIncidencia,
 )
@@ -90,6 +93,11 @@ class OrquestradorLiquidacaoJudicial:
                 )
             elif verba.codigo == "DSR":
                 resultado = cls._executar_dsr(
+                    plano,
+                    verba,
+                )
+            elif verba.codigo == "AVISO_PREVIO":
+                resultado = cls._executar_aviso_previo(
                     plano,
                     verba,
                 )
@@ -298,6 +306,93 @@ class OrquestradorLiquidacaoJudicial:
 
         apurado = ServicoReflexoDSR.calcular(
             horas_extras,
+            parametros,
+        )
+
+        return ResultadoItemLiquidacaoJudicial(
+            codigo_verba=verba.codigo,
+            descricao=verba.descricao,
+            valor=apurado.valor,
+            memoria=apurado.memoria_resumida(),
+            formula_codigo=apurado.formula_codigo,
+        )
+    @staticmethod
+    def _executar_aviso_previo(
+        plano: PlanoLiquidacaoJudicial,
+        verba,
+    ) -> ResultadoItemLiquidacaoJudicial:
+        """
+        Executa aviso-prévio deferido judicialmente.
+
+        A matemática permanece delegada ao ServicoAvisoPrevio.
+        """
+        parametros_judiciais = verba.parametros
+
+        if parametros_judiciais.dias_aviso is None:
+            raise ValueError(
+                "Aviso-prévio exige quantidade de dias definida."
+            )
+
+        if parametros_judiciais.dias_mes_calculo is None:
+            raise ValueError(
+                "Aviso-prévio exige dias do mês de cálculo."
+            )
+
+        fundamento = (
+            parametros_judiciais.fundamento
+            or verba.fundamento
+        )
+
+        if not fundamento:
+            raise ValueError(
+                "Aviso-prévio exige fundamento registrado."
+            )
+
+        salario = ValorMonetario.criar(
+            str(plano.entrada.contrato.salario_base),
+            OrigemFinanceira(
+                descricao="Salário-base do caso judicial.",
+                documento_id=plano.referencia_processo,
+            ),
+            moeda=plano.entrada.parametros.moeda,
+        )
+
+        regra = RegraIncidencia(
+            base_destino=TipoBaseIncidencia.AVISO_PREVIO,
+            incide=True,
+            fundamento=(
+                "Salário-base integrante da base do aviso-prévio "
+                "conforme parâmetros do caso judicial."
+            ),
+        )
+
+        parcela = ParcelaIncidencia(
+            verba=CodigoVerba.SALARIO,
+            valor=salario,
+            regra=regra,
+            descricao="Salário-base do caso judicial",
+            documento_id=plano.referencia_processo,
+        )
+
+        base = ServicoComposicaoBase.compor(
+            TipoBaseIncidencia.AVISO_PREVIO,
+            (parcela,),
+        )
+
+        parametros = ParametrosAvisoPrevio(
+            tipo=TipoAvisoPrevio.INDENIZADO,
+            dias=parametros_judiciais.dias_aviso,
+            dias_mes_calculo=(
+                parametros_judiciais.dias_mes_calculo
+            ),
+            fundamento=fundamento,
+            observacao=(
+                parametros_judiciais.observacoes or None
+            ),
+        )
+
+        apurado = ServicoAvisoPrevio.calcular(
+            base,
             parametros,
         )
 
@@ -560,6 +655,7 @@ class OrquestradorLiquidacaoJudicial:
             memoria=apurado.memoria_resumida(),
             formula_codigo=apurado.formula_codigo,
         )
+
 
 
 
