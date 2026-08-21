@@ -49,3 +49,10 @@ __all__ = [
     "ValidadorCasoTrabalhista",
     "VerbaDeferida",
 ]
+
+from .consolidador_liquidacao_judicial import (
+    ConsolidadorLiquidacaoJudicial,
+)
+from .resultado_consolidado_judicial import (
+    ResultadoConsolidadoJudicial,
+)
