@@ -1,12 +1,19 @@
 ﻿from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
+
+from sgm.dominio.jornada import Tempo
 
 from sgm.dominio.financeiro import OrigemFinanceira, ValorMonetario
 from sgm.dominio.trabalhista import (
+    AdicionalHoraExtra,
     AliquotaFGTS,
+    BaseDeCalculo,
     CodigoVerba,
+    DivisorJornada,
     ParametrosDecimoTerceiro,
+    ParametrosDSR,
     ParametrosFerias,
     ParcelaIncidencia,
     RegraIncidencia,
@@ -14,6 +21,11 @@ from sgm.dominio.trabalhista import (
     ServicoDecimoTerceiro,
     ServicoFerias,
     ServicoFGTS,
+    ServicoHoraExtra,
+    ServicoReflexoDSR,
+    ServicoValorHora,
+    TipoAdicionalHoraExtra,
+    TipoBaseCalculo,
     TipoBaseIncidencia,
 )
 
@@ -71,6 +83,16 @@ class OrquestradorLiquidacaoJudicial:
                     plano,
                     verba,
                 )
+            elif verba.codigo == "HORA_EXTRA":
+                resultado = cls._executar_hora_extra(
+                    plano,
+                    verba,
+                )
+            elif verba.codigo == "DSR":
+                resultado = cls._executar_dsr(
+                    plano,
+                    verba,
+                )
             else:
                 raise NotImplementedError(
                     "A verba "
@@ -94,6 +116,198 @@ class OrquestradorLiquidacaoJudicial:
             memoria=tuple(memoria),
         )
 
+    @staticmethod
+    def _criar_hora_extra_apurada(
+        plano: PlanoLiquidacaoJudicial,
+        verba,
+    ):
+        parametros = verba.parametros
+
+        percentual = (
+            parametros.percentual
+            if parametros.percentual is not None
+            else plano.entrada.parametros.percentual_horas_extras
+        )
+
+        quantidade = (
+            parametros.quantidade
+            if parametros.quantidade is not None
+            else verba.quantidade
+        )
+
+        divisor = (
+            parametros.divisor
+            if parametros.divisor is not None
+            else plano.entrada.parametros.divisor_horas
+        )
+
+        if percentual is None:
+            raise ValueError(
+                "Horas extras exigem percentual definido."
+            )
+
+        if quantidade is None:
+            raise ValueError(
+                "Horas extras exigem quantidade definida."
+            )
+
+        if divisor is None:
+            raise ValueError(
+                "Horas extras exigem divisor definido."
+            )
+
+        fundamento = (
+            parametros.fundamento
+            or verba.fundamento
+        )
+
+        if not fundamento:
+            raise ValueError(
+                "Horas extras exigem fundamento registrado."
+            )
+
+        jornada = plano.entrada.contrato.jornada_semanal
+
+        if jornada is None:
+            raise ValueError(
+                "Horas extras exigem jornada semanal informada."
+            )
+
+        salario = ValorMonetario.criar(
+            str(plano.entrada.contrato.salario_base),
+            OrigemFinanceira(
+                descricao="Salário-base do caso judicial.",
+                documento_id=plano.referencia_processo,
+            ),
+            moeda=plano.entrada.parametros.moeda,
+        )
+
+        base = BaseDeCalculo(
+            valor=salario,
+            tipo=TipoBaseCalculo.SALARIO_CONTRATUAL,
+            competencia=plano.entrada.parametros.data_calculo,
+            descricao="Salário contratual para cálculo da hora",
+            origem_documental=plano.referencia_processo,
+        )
+
+        divisor_obj = DivisorJornada(
+            divisor=divisor,
+            jornada_semanal_minutos=int(
+                jornada * Decimal("60")
+            ),
+            fundamento=fundamento,
+            descricao="Divisor definido no caso judicial",
+        )
+
+        valor_hora = ServicoValorHora.calcular(
+            base,
+            divisor_obj,
+        )
+
+        adicional = AdicionalHoraExtra(
+            percentual=percentual,
+            tipo=TipoAdicionalHoraExtra.JUDICIAL,
+            fundamento=fundamento,
+            descricao="Adicional de hora extra judicial",
+        )
+
+        quantidade_tempo = Tempo(
+            int(quantidade * Decimal("60"))
+        )
+
+        return ServicoHoraExtra.calcular(
+            valor_hora,
+            quantidade_tempo,
+            adicional,
+        )
+
+    @classmethod
+    def _executar_hora_extra(
+        cls,
+        plano: PlanoLiquidacaoJudicial,
+        verba,
+    ) -> ResultadoItemLiquidacaoJudicial:
+        apurado = cls._criar_hora_extra_apurada(
+            plano,
+            verba,
+        )
+
+        return ResultadoItemLiquidacaoJudicial(
+            codigo_verba=verba.codigo,
+            descricao=verba.descricao,
+            valor=apurado.valor_total,
+            memoria=apurado.memoria_resumida(),
+            formula_codigo=apurado.formula_codigo,
+        )
+
+    @classmethod
+    def _executar_dsr(
+        cls,
+        plano: PlanoLiquidacaoJudicial,
+        verba,
+    ) -> ResultadoItemLiquidacaoJudicial:
+        parametros_dsr = verba.parametros
+
+        if parametros_dsr.dias_uteis is None:
+            raise ValueError(
+                "DSR exige dias úteis definidos."
+            )
+
+        if parametros_dsr.dias_repouso is None:
+            raise ValueError(
+                "DSR exige dias de repouso definidos."
+            )
+
+        fundamento = (
+            parametros_dsr.fundamento
+            or verba.fundamento
+        )
+
+        if not fundamento:
+            raise ValueError(
+                "DSR exige fundamento registrado."
+            )
+
+        verba_he = next(
+            (
+                item
+                for item in plano.entrada.sentenca.verbas_deferidas
+                if item.codigo == "HORA_EXTRA"
+            ),
+            None,
+        )
+
+        if verba_he is None:
+            raise ValueError(
+                "DSR exige verba HORA_EXTRA no mesmo título judicial."
+            )
+
+        horas_extras = cls._criar_hora_extra_apurada(
+            plano,
+            verba_he,
+        )
+
+        parametros = ParametrosDSR(
+            dias_uteis=parametros_dsr.dias_uteis,
+            dias_repouso=parametros_dsr.dias_repouso,
+            fundamento=fundamento,
+            observacao=(
+                parametros_dsr.observacoes or None
+            ),
+        )
+
+        apurado = ServicoReflexoDSR.calcular(
+            horas_extras,
+            parametros,
+        )
+
+        return ResultadoItemLiquidacaoJudicial(
+            codigo_verba=verba.codigo,
+            descricao=verba.descricao,
+            valor=apurado.valor,
+            memoria=apurado.memoria_resumida(),
+            formula_codigo=apurado.formula_codigo,
+        )
     @staticmethod
     def _executar_fgts(
         plano: PlanoLiquidacaoJudicial,
@@ -346,5 +560,6 @@ class OrquestradorLiquidacaoJudicial:
             memoria=apurado.memoria_resumida(),
             formula_codigo=apurado.formula_codigo,
         )
+
 
 
