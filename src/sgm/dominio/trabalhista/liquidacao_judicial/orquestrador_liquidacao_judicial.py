@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from sgm.dominio.financeiro import OrigemFinanceira, ValorMonetario
 from sgm.dominio.trabalhista import (
+    AliquotaFGTS,
     CodigoVerba,
     ParametrosDecimoTerceiro,
     ParametrosFerias,
@@ -12,6 +13,7 @@ from sgm.dominio.trabalhista import (
     ServicoComposicaoBase,
     ServicoDecimoTerceiro,
     ServicoFerias,
+    ServicoFGTS,
     TipoBaseIncidencia,
 )
 
@@ -64,6 +66,11 @@ class OrquestradorLiquidacaoJudicial:
                     plano,
                     verba,
                 )
+            elif verba.codigo == "FGTS":
+                resultado = cls._executar_fgts(
+                    plano,
+                    verba,
+                )
             else:
                 raise NotImplementedError(
                     "A verba "
@@ -87,6 +94,91 @@ class OrquestradorLiquidacaoJudicial:
             memoria=tuple(memoria),
         )
 
+    @staticmethod
+    def _executar_fgts(
+        plano: PlanoLiquidacaoJudicial,
+        verba,
+    ) -> ResultadoItemLiquidacaoJudicial:
+        """
+        Executa FGTS deferido judicialmente.
+
+        A matemática permanece delegada ao ServicoFGTS.
+        """
+
+        parametros_judiciais = verba.parametros
+
+        percentual = (
+            parametros_judiciais.percentual
+            if parametros_judiciais.percentual is not None
+            else verba.percentual
+        )
+
+        if percentual is None:
+            raise ValueError(
+                "FGTS exige alíquota definida."
+            )
+
+        fundamento = (
+            parametros_judiciais.fundamento
+            or verba.fundamento
+        )
+
+        if not fundamento:
+            raise ValueError(
+                "FGTS exige fundamento registrado."
+            )
+
+        salario = ValorMonetario.criar(
+            str(plano.entrada.contrato.salario_base),
+            OrigemFinanceira(
+                descricao=(
+                    "Salário-base informado no caso judicial."
+                ),
+                documento_id=plano.referencia_processo,
+            ),
+            moeda=plano.entrada.parametros.moeda,
+        )
+
+        regra = RegraIncidencia(
+            base_destino=TipoBaseIncidencia.FGTS,
+            incide=True,
+            fundamento=(
+                "Salário-base integrante da base do FGTS "
+                "conforme parâmetros do caso judicial."
+            ),
+        )
+
+        parcela = ParcelaIncidencia(
+            verba=CodigoVerba.SALARIO,
+            valor=salario,
+            regra=regra,
+            descricao="Salário-base do caso judicial",
+            documento_id=plano.referencia_processo,
+        )
+
+        base = ServicoComposicaoBase.compor(
+            TipoBaseIncidencia.FGTS,
+            (parcela,),
+        )
+
+        aliquota = AliquotaFGTS(
+            percentual=percentual,
+            fundamento=fundamento,
+            descricao="Alíquota definida no título judicial",
+        )
+
+        apurado = ServicoFGTS.calcular(
+            base,
+            aliquota,
+        )
+
+        return ResultadoItemLiquidacaoJudicial(
+            codigo_verba=verba.codigo,
+            descricao=verba.descricao,
+            valor=apurado.valor,
+            memoria=apurado.memoria_resumida(),
+            formula_codigo=apurado.formula_codigo,
+        )
     @staticmethod
     def _executar_ferias(
         plano: PlanoLiquidacaoJudicial,
@@ -254,4 +346,5 @@ class OrquestradorLiquidacaoJudicial:
             memoria=apurado.memoria_resumida(),
             formula_codigo=apurado.formula_codigo,
         )
+
 
