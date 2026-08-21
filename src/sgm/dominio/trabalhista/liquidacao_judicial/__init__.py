@@ -56,3 +56,13 @@ from .consolidador_liquidacao_judicial import (
 from .resultado_consolidado_judicial import (
     ResultadoConsolidadoJudicial,
 )
+
+from .atualizador_liquidacao_judicial import (
+    AtualizadorLiquidacaoJudicial,
+)
+from .parametros_atualizacao_judicial import (
+    ParametrosAtualizacaoJudicial,
+)
+from .resultado_atualizado_judicial import (
+    ResultadoAtualizadoJudicial,
+)
