@@ -6,6 +6,10 @@ from decimal import Decimal
 from sgm.dominio.jornada import Tempo
 
 from sgm.dominio.financeiro import OrigemFinanceira, ValorMonetario
+from sgm.dominio.trabalhista.adicional_noturno import (
+    ParametrosAdicionalNoturno,
+    ServicoAdicionalNoturno,
+)
 from sgm.dominio.trabalhista.equiparacao_salarial import (
     ServicoEquiparacaoSalarial,
 )
@@ -109,6 +113,11 @@ class OrquestradorLiquidacaoJudicial:
                     plano,
                     verba,
                 )
+            elif verba.codigo == "ADICIONAL_NOTURNO":
+                resultado = cls._executar_adicional_noturno(
+                    plano,
+                    verba,
+                )
             else:
                 raise NotImplementedError(
                     "A verba "
@@ -130,6 +139,140 @@ class OrquestradorLiquidacaoJudicial:
             referencia_processo=plano.referencia_processo,
             itens=tuple(resultados),
             memoria=tuple(memoria),
+        )
+
+    @staticmethod
+    def _executar_adicional_noturno(
+        plano: PlanoLiquidacaoJudicial,
+        verba,
+    ) -> ResultadoItemLiquidacaoJudicial:
+        """
+        Executa adicional noturno deferido judicialmente.
+
+        A quantidade de tempo noturno deve chegar previamente
+        apurada. A matemática financeira permanece delegada ao
+        ServicoAdicionalNoturno.
+        """
+        parametros_judiciais = verba.parametros
+
+        percentual = (
+            parametros_judiciais.percentual
+            if parametros_judiciais.percentual is not None
+            else verba.percentual
+        )
+
+        quantidade = (
+            parametros_judiciais.quantidade
+            if parametros_judiciais.quantidade is not None
+            else verba.quantidade
+        )
+
+        divisor = (
+            parametros_judiciais.divisor
+            if parametros_judiciais.divisor is not None
+            else plano.entrada.parametros.divisor_horas
+        )
+
+        if percentual is None:
+            raise ValueError(
+                "Adicional noturno exige percentual definido."
+            )
+
+        if quantidade is None:
+            raise ValueError(
+                "Adicional noturno exige quantidade definida."
+            )
+
+        if quantidade <= 0:
+            raise ValueError(
+                "Adicional noturno exige quantidade maior que zero."
+            )
+
+        if divisor is None:
+            raise ValueError(
+                "Adicional noturno exige divisor definido."
+            )
+
+        fundamento = (
+            parametros_judiciais.fundamento
+            or verba.fundamento
+        )
+
+        if not fundamento:
+            raise ValueError(
+                "Adicional noturno exige fundamento registrado."
+            )
+
+        jornada = plano.entrada.contrato.jornada_semanal
+
+        if jornada is None:
+            raise ValueError(
+                "Adicional noturno exige jornada semanal informada."
+            )
+
+        salario = ValorMonetario.criar(
+            str(plano.entrada.contrato.salario_base),
+            OrigemFinanceira(
+                descricao=(
+                    "Salário-base do caso judicial para "
+                    "adicional noturno."
+                ),
+                documento_id=plano.referencia_processo,
+            ),
+            moeda=plano.entrada.parametros.moeda,
+        )
+
+        base = BaseDeCalculo(
+            valor=salario,
+            tipo=TipoBaseCalculo.SALARIO_CONTRATUAL,
+            competencia=plano.entrada.parametros.data_calculo,
+            descricao=(
+                "Salário contratual para cálculo "
+                "do adicional noturno"
+            ),
+            origem_documental=plano.referencia_processo,
+        )
+
+        divisor_obj = DivisorJornada(
+            divisor=divisor,
+            jornada_semanal_minutos=int(
+                jornada * Decimal("60")
+            ),
+            fundamento=fundamento,
+            descricao=(
+                "Divisor definido para adicional noturno judicial"
+            ),
+        )
+
+        valor_hora = ServicoValorHora.calcular(
+            base,
+            divisor_obj,
+        )
+
+        parametros = ParametrosAdicionalNoturno(
+            percentual=percentual,
+            fundamento=fundamento,
+            observacao=(
+                parametros_judiciais.observacoes or None
+            ),
+        )
+
+        quantidade_tempo = Tempo(
+            int(quantidade * Decimal("60"))
+        )
+
+        apurado = ServicoAdicionalNoturno.calcular(
+            valor_hora=valor_hora,
+            quantidade=quantidade_tempo,
+            parametros=parametros,
+        )
+
+        return ResultadoItemLiquidacaoJudicial(
+            codigo_verba=verba.codigo,
+            descricao=verba.descricao,
+            valor=apurado.valor_total,
+            memoria=apurado.memoria_resumida(),
+            formula_codigo=apurado.formula_codigo,
         )
 
     @staticmethod
@@ -693,6 +836,7 @@ class OrquestradorLiquidacaoJudicial:
             memoria=apurado.memoria_resumida(),
             formula_codigo=apurado.formula_codigo,
         )
+
 
 
 
