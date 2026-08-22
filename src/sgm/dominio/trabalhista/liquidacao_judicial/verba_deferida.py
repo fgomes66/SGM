@@ -2,8 +2,14 @@
 
 from dataclasses import dataclass, field
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from .parametros_verba_judicial import ParametrosVerbaJudicial
+
+if TYPE_CHECKING:
+    from sgm.dominio.trabalhista.equiparacao_salarial import (
+        CompetenciaEquiparacao,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,6 +25,10 @@ class VerbaDeferida:
     parametros: ParametrosVerbaJudicial = field(
         default_factory=ParametrosVerbaJudicial
     )
+
+    competencias_equiparacao: tuple[
+        "CompetenciaEquiparacao", ...
+    ] = ()
 
     def __post_init__(self) -> None:
         codigo = self.codigo.strip().upper()
@@ -66,3 +76,12 @@ class VerbaDeferida:
             "observacoes",
             self.observacoes.strip(),
         )
+
+        if (
+            codigo != "EQUIPARACAO_SALARIAL"
+            and self.competencias_equiparacao
+        ):
+            raise ValueError(
+                "Competências de equiparação só podem ser "
+                "informadas para a verba EQUIPARACAO_SALARIAL."
+            )

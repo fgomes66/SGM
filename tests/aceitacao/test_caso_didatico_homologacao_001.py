@@ -230,7 +230,7 @@ def test_diagnostico_do_caso_didatico_001():
 
     # Motores ainda inexistentes.
     assert mapa["EQUIPARACAO_SALARIAL"] is (
-        CapacidadeVerbaJudicial.NAO_SUPORTADO
+        CapacidadeVerbaJudicial.BLOQUEADO_POR_DADOS
     )
     assert mapa["ADICIONAL_NOTURNO"] is (
         CapacidadeVerbaJudicial.NAO_SUPORTADO
@@ -302,3 +302,4 @@ def test_diagnostico_expoe_motivos_dos_bloqueios():
         "quantidade" in motivo.lower()
         for motivo in hora_extra.motivos
     )
+

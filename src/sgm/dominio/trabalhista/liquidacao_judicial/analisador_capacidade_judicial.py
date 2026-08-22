@@ -28,6 +28,7 @@ class AnalisadorCapacidadeJudicial:
             "HORA_EXTRA",
             "DSR",
             "AVISO_PREVIO",
+            "EQUIPARACAO_SALARIAL",
         }
     )
 
@@ -64,6 +65,29 @@ class AnalisadorCapacidadeJudicial:
                                 f"A verba {codigo} ainda não possui "
                                 "executor integrado ao motor de "
                                 "liquidação judicial."
+                            ),
+                        ),
+                    )
+                )
+                continue
+
+            if (
+                codigo == "EQUIPARACAO_SALARIAL"
+                and not verba.competencias_equiparacao
+            ):
+                diagnosticos.append(
+                    DiagnosticoVerbaJudicial(
+                        indice=indice,
+                        codigo_verba=codigo,
+                        descricao=verba.descricao,
+                        capacidade=(
+                            CapacidadeVerbaJudicial.BLOQUEADO_POR_DADOS
+                        ),
+                        motivos=(
+                            (
+                                "A equiparação salarial exige "
+                                "competências remuneratórias da "
+                                "reclamante e do paradigma."
                             ),
                         ),
                     )
@@ -112,3 +136,4 @@ class AnalisadorCapacidadeJudicial:
             referencia_processo=entrada.referencia_processo,
             verbas=tuple(diagnosticos),
         )
+

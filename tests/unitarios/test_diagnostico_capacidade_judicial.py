@@ -152,17 +152,19 @@ def test_diagnostico_misto():
     )
 
     assert len(diagnostico.executaveis) == 1
-    assert len(diagnostico.bloqueadas_por_dados) == 1
-    assert len(diagnostico.nao_suportadas) == 1
+    assert len(diagnostico.bloqueadas_por_dados) == 2
+    assert len(diagnostico.nao_suportadas) == 0
 
     assert diagnostico.executaveis[0].codigo_verba == "FGTS"
     assert (
         diagnostico.bloqueadas_por_dados[0].codigo_verba
         == "FERIAS"
     )
-    assert (
-        diagnostico.nao_suportadas[0].codigo_verba
-        == "EQUIPARACAO_SALARIAL"
+    assert any(
+        item.codigo_verba == "EQUIPARACAO_SALARIAL"
+        for item in diagnostico.bloqueadas_por_dados
     )
 
     assert diagnostico.totalmente_executavel is False
+
+
