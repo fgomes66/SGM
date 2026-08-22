@@ -6,6 +6,9 @@ from decimal import Decimal
 from sgm.dominio.jornada import Tempo
 
 from sgm.dominio.financeiro import OrigemFinanceira, ValorMonetario
+from sgm.dominio.trabalhista.equiparacao_salarial import (
+    ServicoEquiparacaoSalarial,
+)
 from sgm.dominio.trabalhista import (
     AdicionalHoraExtra,
     AliquotaFGTS,
@@ -101,6 +104,11 @@ class OrquestradorLiquidacaoJudicial:
                     plano,
                     verba,
                 )
+            elif verba.codigo == "EQUIPARACAO_SALARIAL":
+                resultado = cls._executar_equiparacao_salarial(
+                    plano,
+                    verba,
+                )
             else:
                 raise NotImplementedError(
                     "A verba "
@@ -122,6 +130,36 @@ class OrquestradorLiquidacaoJudicial:
             referencia_processo=plano.referencia_processo,
             itens=tuple(resultados),
             memoria=tuple(memoria),
+        )
+
+    @staticmethod
+    def _executar_equiparacao_salarial(
+        plano: PlanoLiquidacaoJudicial,
+        verba,
+    ) -> ResultadoItemLiquidacaoJudicial:
+        """
+        Executa equiparação salarial deferida judicialmente.
+
+        A apuração permanece delegada ao
+        ServicoEquiparacaoSalarial.
+        """
+        if not verba.competencias_equiparacao:
+            raise ValueError(
+                "Equiparação salarial exige competências "
+                "remuneratórias informadas."
+            )
+
+        apurado = ServicoEquiparacaoSalarial.calcular(
+            competencias=verba.competencias_equiparacao,
+            referencia=plano.referencia_processo,
+        )
+
+        return ResultadoItemLiquidacaoJudicial(
+            codigo_verba=verba.codigo,
+            descricao=verba.descricao,
+            valor=apurado.total_diferencas,
+            memoria=apurado.memoria_resumida(),
+            formula_codigo="FM-EQ-001",
         )
 
     @staticmethod
@@ -655,6 +693,7 @@ class OrquestradorLiquidacaoJudicial:
             memoria=apurado.memoria_resumida(),
             formula_codigo=apurado.formula_codigo,
         )
+
 
 
 
