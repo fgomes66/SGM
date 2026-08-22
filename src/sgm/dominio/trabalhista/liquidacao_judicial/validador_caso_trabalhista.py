@@ -257,6 +257,43 @@ class ValidadorCasoTrabalhista:
                         "Horas extras exigem divisor de jornada.",
                     )
 
+            elif codigo == "ADICIONAL_NOTURNO":
+                percentual = (
+                    parametros.percentual
+                    if parametros.percentual is not None
+                    else verba.percentual
+                )
+
+                quantidade = (
+                    parametros.quantidade
+                    if parametros.quantidade is not None
+                    else verba.quantidade
+                )
+
+                if percentual is None:
+                    cls._erro_parametro(
+                        achados,
+                        f"{prefixo}-PERCENTUAL",
+                        indice,
+                        "percentual",
+                        (
+                            "Adicional noturno exige o percentual "
+                            "aplicável."
+                        ),
+                    )
+
+                if quantidade is None:
+                    cls._erro_parametro(
+                        achados,
+                        f"{prefixo}-QUANTIDADE",
+                        indice,
+                        "quantidade",
+                        (
+                            "Adicional noturno exige a quantidade "
+                            "de tempo noturno a ser apurada."
+                        ),
+                    )
+
             elif codigo == "DSR":
                 if parametros.dias_uteis is None:
                     cls._erro_parametro(
@@ -351,3 +388,4 @@ class ValidadorCasoTrabalhista:
                     ),
                 )
             )
+

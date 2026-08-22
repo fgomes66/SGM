@@ -93,7 +93,7 @@ def test_verba_conhecida_sem_dado_deve_bloquear():
     )
 
 
-def test_verba_desconhecida_deve_ser_nao_suportada():
+def test_adicional_noturno_sem_quantidade_deve_bloquear():
     entrada = _entrada(
         VerbaDeferida(
             codigo="ADICIONAL_NOTURNO",
@@ -110,14 +110,19 @@ def test_verba_desconhecida_deve_ser_nao_suportada():
         entrada
     )
 
-    assert len(diagnostico.nao_suportadas) == 1
+    assert len(diagnostico.bloqueadas_por_dados) == 1
 
-    item = diagnostico.nao_suportadas[0]
+    item = diagnostico.bloqueadas_por_dados[0]
 
     assert item.codigo_verba == "ADICIONAL_NOTURNO"
     assert (
         item.capacidade
-        is CapacidadeVerbaJudicial.NAO_SUPORTADO
+        is CapacidadeVerbaJudicial.BLOQUEADO_POR_DADOS
+    )
+
+    assert any(
+        "quantidade" in motivo.lower()
+        for motivo in item.motivos
     )
 
 
@@ -166,5 +171,6 @@ def test_diagnostico_misto():
     )
 
     assert diagnostico.totalmente_executavel is False
+
 
 

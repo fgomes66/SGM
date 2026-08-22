@@ -29,6 +29,7 @@ class AnalisadorCapacidadeJudicial:
             "DSR",
             "AVISO_PREVIO",
             "EQUIPARACAO_SALARIAL",
+            "ADICIONAL_NOTURNO",
         }
     )
 
@@ -136,4 +137,5 @@ class AnalisadorCapacidadeJudicial:
             referencia_processo=entrada.referencia_processo,
             verbas=tuple(diagnosticos),
         )
+
 
