@@ -1,9 +1,6 @@
 ﻿from datetime import date
 
-from sgm.dominio.jornada.modelos.horario import Horario
-from sgm.dominio.jornada.modelos.intervalo import Intervalo
-from sgm.dominio.jornada.modelos.periodo_trabalho import PeriodoTrabalho
-from sgm.dominio.jornada.modelos.tempo import Tempo
+from sgm.dominio.jornada import Horario, Intervalo, PeriodoTrabalho, Tempo
 from sgm.dominio.trabalhista.jornada_variavel import (
     RegraJornadaPosicional,
     ServicoJornadaVariavel,
@@ -32,25 +29,23 @@ def _regra() -> RegraJornadaPosicional:
         ultimos_especiais=3,
         limite_diario=Tempo(8 * 60),
         inicio_noturno=Horario.de_texto("22:00"),
-        fundamento="Jornada variável deferida no título judicial.",
+        fundamento="Jornada reconhecida no título judicial.",
     )
 
 
 def _datas() -> tuple[date, ...]:
     return tuple(
-        date(2024, 1, dia)
-        for dia in range(2, 12)
+        date(2025, 1, dia)
+        for dia in range(1, 11)
     )
 
 
-def test_jornada_variavel_classifica_primeiros_e_ultimos():
+def test_jornada_variavel_classifica_primeiros_e_ultimos_dias():
     resultado = ServicoJornadaVariavel.calcular(
-        competencia=CompetenciaCalculo(2024, 1),
+        competencia=CompetenciaCalculo(2025, 1),
         datas_trabalhadas=_datas(),
         regra=_regra(),
     )
-
-    assert resultado.quantidade_dias == 10
 
     especiais = tuple(
         item.data.day
@@ -58,19 +53,13 @@ def test_jornada_variavel_classifica_primeiros_e_ultimos():
         if item.especial
     )
 
-    assert especiais == (
-        2,
-        3,
-        4,
-        9,
-        10,
-        11,
-    )
+    assert especiais == (1, 2, 3, 8, 9, 10)
+    assert resultado.quantidade_dias == 10
 
 
 def test_jornada_variavel_calcula_horas_extras():
     resultado = ServicoJornadaVariavel.calcular(
-        competencia=CompetenciaCalculo(2024, 1),
+        competencia=CompetenciaCalculo(2025, 1),
         datas_trabalhadas=_datas(),
         regra=_regra(),
     )
@@ -92,55 +81,55 @@ def test_jornada_variavel_calcula_horas_extras():
     assert resultado.total_horas_extras.minutos == (
         39 * 60 + 30
     )
-
     assert resultado.total_horas_extras.para_hhmm() == "39:30"
 
 
 def test_jornada_variavel_calcula_tempo_noturno():
     resultado = ServicoJornadaVariavel.calcular(
-        competencia=CompetenciaCalculo(2024, 1),
+        competencia=CompetenciaCalculo(2025, 1),
         datas_trabalhadas=_datas(),
         regra=_regra(),
     )
 
-    # Somente jornadas especiais chegam após 22:00.
-    # 22:00-22:45 = 45 minutos por dia.
-    # 6 x 45 = 270 minutos = 4h30.
+    # Apenas os 6 dias especiais ultrapassam 22:00.
+    # 6 x 45 minutos = 270 minutos = 4h30.
 
     assert resultado.total_tempo_noturno.minutos == 270
     assert resultado.total_tempo_noturno.para_hhmm() == "04:30"
 
 
-def test_jornada_variavel_preserva_memoria():
+def test_jornada_variavel_memoria_identifica_totais():
     resultado = ServicoJornadaVariavel.calcular(
-        competencia=CompetenciaCalculo(2024, 1),
+        competencia=CompetenciaCalculo(2025, 1),
         datas_trabalhadas=_datas(),
         regra=_regra(),
     )
 
     memoria = "\n".join(resultado.memoria_resumida())
 
-    assert "2024-01" in memoria
+    assert "2025-01" in memoria
     assert "39:30" in memoria
     assert "04:30" in memoria
     assert "JORNADA ESPECIAL" in memoria
+    assert "JORNADA ORDINÁRIA" in memoria
 
 
 def test_jornada_variavel_rejeita_data_de_outra_competencia():
     datas = (
-        date(2024, 1, 31),
-        date(2024, 2, 1),
+        date(2025, 1, 31),
+        date(2025, 2, 1),
     )
 
     try:
         ServicoJornadaVariavel.calcular(
-            competencia=CompetenciaCalculo(2024, 1),
+            competencia=CompetenciaCalculo(2025, 1),
             datas_trabalhadas=datas,
             regra=_regra(),
         )
     except ValueError as exc:
-        assert "competência" in str(exc)
+        assert "competência" in str(exc).lower()
     else:
         raise AssertionError(
             "Era esperado ValueError para data de outra competência."
         )
+
